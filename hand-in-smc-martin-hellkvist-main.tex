@@ -1,0 +1,24 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[a4paper, total={6in,10in}]{geometry}
+\usepackage{amsmath}
+\usepackage{bm}
+\usepackage{amssymb}
+\title{Hand-in assignments \\ PhD course on Sequential Monte Carlo methods 2019}
+\author{\textbf{Martin Hellkvist}\\
+	 \textit{Signals and Systems, Uppsala University}}
+
+\begin{document}
+\maketitle
+\subsection*{H.1 Importance sampling theory}
+\paragraph{(a)} Show that the estimator $\hat{Z}$ is unbiased.
+\begin{align}
+	\begin{split}
+	\mathbb{E}[\hat{Z}] &= \frac{1}{N}\sum_{i=1}^{N}\mathbb{E}\frac{\tilde{\pi}(x^i)}{q(x^i)} = \frac{1}{N}N\mathbb{E}_X\frac{\tilde{\pi}(x)}{q(x)} =\\
+	&= \int \frac{\tilde{\pi}(x)}{q(x)}q(x)dx = \int \tilde{\pi}(x)dx = \int Z \pi(x) dx= Z\int\pi(x)dx = Z.
+	\end{split}
+\end{align}
+So the expectation of the estimate is exactly the true value, hence the estimator is unbiased.
+
+\paragraph{(b)}
+\end{document}
