@@ -6,7 +6,7 @@ import numpy as np
 from scipy.stats import cauchy, norm
 import matplotlib.pyplot as plt
 
-g = 2**.5
+g = 2**-.5
 
 ## to control the cauchy is what we think it is haha
 # x = np.linspace(cauchy.ppf(0.01), cauchy.ppf(0.99), 1000)
@@ -35,7 +35,7 @@ plt.hist(np.mean(W_tilde[:, 0:100], axis=1), bins=50, density=True, alpha=0.6, l
 plt.hist(np.mean(W_tilde[:, 0:1000], axis=1), bins=50, density=True, alpha=.6, label='N=1000')
 plt.hist(np.mean(W_tilde[:, 0:10000], axis=1), bins=50, density=True, alpha=.6, label='N=10000')
 plt.legend()
-plt.xticks([2, np.pi**0.5*2**.5, 3], ('2.0','Z=(2*pi)^0.5','3.0'))
+plt.xticks([2.2, 2.3, np.pi**0.5*2**.5, 2.7, 2.8], ('2.2','2.3','Z=(2*pi)^0.5', '2.7', '2.8'))
 plt.vlines(2**.5*np.pi**.5, 0, 1)
 plt.title('Estimates of normalizing constant Z for different N')
 plt.show()
