@@ -40,7 +40,7 @@ Plugging in the expressions $\pi(x) = \frac{1}{\sqrt{2\pi}}\exp\{-x^2/2\}$ and $
 	\end{equation}
 The integration is over the whole real axis for $x$, and the expression becomes
 	\begin{equation}
-		f(\gamma)=\dfrac{\gamma^2}{4\gamma}\sqrt(\pi)\text{erf}(x) + \dfrac{1}{8\gamma}\Big(\sqrt(\pi)\text{erf}(x)-2\exp\{-x^2\}x\Big)\Bigg|_{x\rightarrow-\infty}^{x\rightarrow+\infty}=
+		f(\gamma)=\dfrac{\gamma^2}{4\gamma}\sqrt(\pi)\text{erf}(x) + \dfrac{1}{8\gamma}\Big(\sqrt{\pi}\text{erf}(x)-2\exp\{-x^2\}x\Big)\Bigg|_{x\rightarrow-\infty}^{x\rightarrow+\infty}=
 	\end{equation}
 	\begin{equation}
 		=\dfrac{(2\gamma^2+1)\sqrt{\pi}\text{erf}(x)-2\exp\{-x^2\}x}{8\gamma}\Bigg|_{x\rightarrow-\infty}^{x\rightarrow+\infty} =
@@ -95,7 +95,7 @@ Figure \ref{fig:1chist1} illustrates the IS with the standard normal distributio
 
 
 
-\subsection*{H.2 Particle filter for a linear Gaussian state}
+\subsection*{H.2 Particle filter for a linear Gaussian state-space model}
 \paragraph{(a)} The pdf's are $p(x_t|x_{t-1}) = \mathcal{N}(x_t; 0.8x_{t-1}, 0.5)$ and $ p(y_t|x_t) = \mathcal{N}(y_t;2x_t, 0.1) $.
 
 \paragraph{(b)} Because we perfectly know the noise covariances, and that the model matches the simulated system, the Kalman filter is the optimal linear filter. The particle filter is on the other hand can model nonlinearities is the data. Therefore, we can expect the particle filter's estimated trajectory to be closer to the true one, if we number of particles is large enough.
@@ -156,34 +156,34 @@ so we get the normal distribution q:
 
 
 Table \ref{tab:2d} presents the MAD between the FAPF and the Kalman state trajectories for one simulation. Compared to the results for the BPF, the MAD is now a lot lower for small N, while they are still lower for larger N's but not as strikingly. 
-\begin{table}
-	\centering
-	\begin{tabular}{lrr}\hline
-		$N$ & MAD 		\\
-		10 	& 0.0388	\\
-		50	& 0.0181	\\
-		100	& 0.0122	\\
-		2000& 0.0028	\\
-		5000& 0.0019 	\\\hline
-	\end{tabular}
-	\caption{2d. The mean average difference between the Fully Adapted Particle filter's state trajectory and the Kalman filter's state trajectory.}
-	\label{tab:2d}
-\end{table}
+	\begin{table}
+		\centering
+		\begin{tabular}{lrr}\hline
+			$N$ & MAD 		\\
+			10 	& 0.0388	\\
+			50	& 0.0181	\\
+			100	& 0.0122	\\
+			2000& 0.0028	\\
+			5000& 0.0019 	\\\hline
+		\end{tabular}
+		\caption{2d. The mean average difference between the Fully Adapted Particle filter's state trajectory and the Kalman filter's state trajectory.}
+		\label{tab:2d}
+	\end{table}
 
 \paragraph{(e)} Figure \ref{fig:2_e} illustrates how only a few particles at time 1950 are remaining as ancestors for the final particles. 
-
-\begin{figure}[h]
-	\centering
-	\includegraphics[width=\linewidth]{2_e}
-	\caption{2e. Particle genealogy from time 1950 to 1999 for the fully adaptive particle filter.}
-	\label{fig:2_e}
-\end{figure}
+	
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=\linewidth]{2_e}
+		\caption{2e. Particle genealogy from time 1950 to 1999 for the fully adaptive particle filter.}
+		\label{fig:2_e}
+	\end{figure}
 
 \paragraph{(f)} With systematic resampling the FAPF obtains less degeneracy and the final particles have many more ancestors. As illustrated in figure \ref{fig:2_f}, at iteration 2 there are around 30 particles who are ancestors to the final 100 particles.
-\begin{figure}[h]
-	\centering
-	\includegraphics[width=\linewidth]{2_f}
-	\caption{2f. The early genealogy for the final 100 particles.}
-	\label{fig:2_f}
-\end{figure}
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=\linewidth]{2_f}
+		\caption{2f. The early genealogy for the final 100 particles.}
+		\label{fig:2_f}
+	\end{figure}
 \end{document}	

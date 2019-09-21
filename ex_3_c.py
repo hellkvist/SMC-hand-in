@@ -29,7 +29,8 @@ def bpf(y, x_in, N, phi, sigma, beta):
     a_mat = np.zeros((N, T))
     # set initial weights 
     w = 1/N * np.ones(N)
-
+    w_mat = np.zeros((N,T))
+    w_mat[:, 0] = w
     for t in range(T):
         # resample with linear weights
         idx = np.random.choice(N, size=N, replace=True, p=w)
@@ -49,7 +50,7 @@ def bpf(y, x_in, N, phi, sigma, beta):
 
         x[:, t] = x_prop
         a_mat[:, t] = idx
-
+        w_mat[:, t]  = w
     a_mat[N-1,:] = N-1
 
     # draw one of the final particles to choose its ancestor path as output
@@ -63,7 +64,7 @@ def bpf(y, x_in, N, phi, sigma, beta):
         a_vec[t] = a_mat[a_vec[t+1], t]
 
     for t in range(T):
-        path[t] = x[a_vec[t], t]
+        path[t] = w_mat[a_vec[t], t]*x[a_vec[t], t]
 
     return x, path
 
@@ -95,8 +96,8 @@ def gibbs(M, N, y, x_in, beta_0, sigma_0, phi):
 phi = 0.985
 sigma_0 = 0.16
 beta_0 = 0.7
-M = 10000
-N = 10
+M = 1000
+N = 100
 
 # y = np.genfromtxt('Hand-in/OMXLogReturns.csv', delimiter=',')
 y = np.genfromtxt('OMXLogReturns.csv', delimiter=',')
@@ -123,26 +124,10 @@ plt.xlabel(r'$\sigma^2$')
 
 plt.figure(3)
 plt.subplot(121)
-plt.hist(beta2[1000::], bins=50)
+plt.hist(beta2[100::], bins=50)
 plt.xlabel(r'$\beta^2$')
 plt.subplot(122)
-plt.hist(sigma2[1000::], bins=50)
-plt.xlabel(r'$\sigma^2$')
-
-plt.figure(4)
-plt.subplot(121)
-plt.hist(beta2[1000::], bins=50)
-plt.xlabel(r'$\beta^2$')
-plt.subplot(122)
-plt.hist(sigma2[1000::], bins=50)
-plt.xlabel(r'$\sigma^2$')
-
-plt.figure(5)
-plt.subplot(121)
-plt.hist(beta2[2000::], bins=50)
-plt.xlabel(r'$\beta^2$')
-plt.subplot(122)
-plt.hist(sigma2[2000::], bins=50)
+plt.hist(sigma2[100::], bins=50)
 plt.xlabel(r'$\sigma^2$')
 
 plt.figure(6)

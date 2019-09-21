@@ -5,9 +5,13 @@ from scipy.special import gamma
 def log_invgamma(x, a, b):
     return np.log(b**a/gamma(a) * x**(-a-1)) - b/x
 
-x = np.linspace(0, .1, 1000000)
+def log_invgamma_rvs(a, b, size):
+    # b = np.min((100000, b))
+    y = np.log(np.random.gamma(a, 1/b, size))
+    return -y
 
-pdf = np.exp(log_invgamma(x, 0.01, 0.01))
+def invgamma(a,b):
+    return 1/np.random.gamma(a, 1/b)
 
-plt.plot(x, pdf)
-plt.show()
+y = invgamma(300, 400)
+print(y)

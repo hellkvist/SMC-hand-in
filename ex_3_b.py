@@ -13,7 +13,11 @@ def log_weights(y, x, beta):
     variance = beta**2*np.exp(x)
     return np.log(1/np.sqrt(2*np.pi * variance)) - y**2/(2*variance)
 
-def log_lik_bpf(y, N, phi, sigma, beta):
+def log_lik_bpf(y, N, phi, sigma, beta):   
+    '''
+        Bootstrap Particle Filter
+        returns the logartihm of the likelihood of the parameters sigma and beta
+    '''
     log_z = 0
 
     T = len(y)
@@ -46,10 +50,13 @@ def log_lik_bpf(y, N, phi, sigma, beta):
     return log_z
 
 def pmh(y, M, N, phi, step_size_beta, step_size_sigma):
+    '''
+        Particle Metropolis Hastings
+    '''
     beta = np.zeros(M)
     sigma = np.zeros(M)
     log_z = np.zeros(M)
-
+    accepts = 0
     # initialize parameters beta and sigma
     beta[0] = 10
     sigma[0] = 10
@@ -69,7 +76,7 @@ def pmh(y, M, N, phi, step_size_beta, step_size_sigma):
         beta_prop = np.random.normal(loc=beta_prev, scale=step_size_beta)
         sigma_prop = np.random.normal(loc=sigma_prev, scale=step_size_sigma)
 
-        # a negative value is proposed for any of the two, neclegt and iterate m
+        # if a negative value is proposed for any of the two, neclegt and iterate m
         if sigma_prop >= 0 and beta_prop >= 0:
             u = np.random.uniform()
             
@@ -77,6 +84,7 @@ def pmh(y, M, N, phi, step_size_beta, step_size_sigma):
             log_z_prop = log_lik_bpf(y, N, phi, sigma_prop, beta_prop)
 
             # compute the numerator of the acceptance probability
+            # the denominator will only be updated on accept.
             log_num = log_z_prop + log_invgamma(beta_prop**2, 0.01, 0.01) + log_invgamma(sigma_prop**2, 0.01, 0.01)
 
             alpha = np.min((1, np.exp(log_num - log_den)))
@@ -87,7 +95,8 @@ def pmh(y, M, N, phi, step_size_beta, step_size_sigma):
 
                 beta_prev = beta_prop
                 sigma_prev = sigma_prop
-                log_den = log_num
+                log_den = log_num # update the denominator of the acceptance probability, which is the same as the nominator we just computed.
+                accepts += 1
             else: # reject
                 beta[m] = beta_prev
                 sigma[m] = sigma_prev
@@ -97,18 +106,19 @@ def pmh(y, M, N, phi, step_size_beta, step_size_sigma):
             sigma[m] = sigma_prev
             log_z[m] = log_z[m-1]
 
+    print('accept rate: ', accepts/M)
     return (beta, sigma, log_z)
 
 
-y = np.genfromtxt('Hand-in/OMXLogReturns.csv', delimiter=',')
+# y = np.genfromtxt('Hand-in/OMXLogReturns.csv', delimiter=',')
+y = np.genfromtxt('OMXLogReturns.csv', delimiter=',')
 phi = 0.985
 step_size_beta = 1
-step_size_sigma = 0.1
-M = 10000
-N = 100
+step_size_sigma = 0.5
+M = 3000
+N = 1000
 
 beta, sigma, log_z = pmh(y, M, N, phi, step_size_beta, step_size_sigma)
-
 plt.figure(1)
 plt.subplot(121)
 plt.hist(beta**2, bins=50)
@@ -159,4 +169,8 @@ plt.subplot(212)
 plt.plot(sigma**2)
 plt.ylabel(r'$\sigma^2$')
 plt.xlabel('PMH iteration')
+
+plt.figure(7)
+plt.plot(log_z, label='log_z')
+plt.legend()
 plt.show()

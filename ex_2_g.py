@@ -56,38 +56,41 @@ def systematic_resampling(U, v):
         while U[i] < v_cumsum[n]:
             a[i] = n
             i += 1
-            if i == 100:
+            if i == N:
                 return a
     return -1
 
-N = 10
+N = 100 # particles in the FAPF
+
+resamples = 0
 
 mad_fapf_2_kalman = []
 print(N)
 
 x_fapf_hat = np.zeros(T)
 x_fapf = np.zeros((N, T))
-a = np.zeros((N, T))
+a = np.zeros((N, T)).astype(int)
 
 # initialize x from q
 x_fapf[:, 0] = fapf_q(y[0], 0, N)
+w = 1/N * np.ones(N)
 
 N_eff = np.zeros(T)
 for t in range(1, T):
     # compute misadjustment multipliers v
-    v = fapf_v_pdf(y[t-1], x_fapf[:, t-1])
-    v /= N
+    v = fapf_v_pdf(y[t], x_fapf[:, t-1])
+    v /= v.sum()
     N_eff[t] = 1/np.sum(v**2)
-
-    if N_eff[t] < N/2:
-        # ancenstor indexes
+    if N_eff[t] < 80: # resample
+         # ancenstor indexes
         U = np.zeros(N)
         U0 = np.random.uniform(0, 1/N)
         for i in range(N):
             U[i] = i/N + U0
         # a[:, t] = np.random.choice(N, size=N, p=v)
         a[:, t] = systematic_resampling(U, v)
-    else:
+        resamples += 1
+    else: # do not resample
         a[:, t] = np.arange(N)
 
     # propagation
@@ -97,11 +100,12 @@ for t in range(1, T):
 mad_fapf_2_kalman.append(np.mean(np.abs(x_fapf_hat-x_kalman)))
 
 print('MAD between FAPF and Kalman state: ', mad_fapf_2_kalman)
+print('N.o. resamples: ', resamples)
 ## end of FAPF block
 
 a = a.astype(int)
 idx = np.arange(N)
-for t in range(T-1950, 0, -1):
+for t in range(T-2, T-50, -1):
     n = len(idx)
     t_mat = np.vstack((t*np.ones(n), (t-1)*np.ones(n)))
     ancest = a[a[idx, t], t-1]
@@ -111,13 +115,12 @@ for t in range(T-1950, 0, -1):
     idx = np.unique(ancest)
 plt.xlabel('Iteration')
 plt.ylabel('State')
-# plt.xlim(1950, 1999)
+plt.xlim(1950, 1999)
 plt.grid()
 plt.tight_layout()
 
-plt.figure()
+plt.figure(2)
+plt.grid()
 plt.plot(N_eff)
-
-
-
+print(np.mean(N_eff))
 plt.show()
