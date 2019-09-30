@@ -96,17 +96,20 @@ print('MAD between FAPF and Kalman state: ', mad_fapf_2_kalman)
 ## end of FAPF block
 a = a.astype(int)
 idx = np.arange(N)
-for t in range(T-1, T-50, -1):
+plot_from = 100
+plot_to = 0
+for t in range(T-1, 1, -1):
     n = len(idx)
     t_mat = np.vstack((t*np.ones(n), (t-1)*np.ones(n)))
     ancest = a[a[idx, t], t-1]
     val_mat =  np.vstack((x_fapf[idx, t], x_fapf[ancest, t-1]))
     idx_mat = np.vstack((idx, ancest))
-    plt.plot(t_mat, val_mat, 'ko-', linewidth=.5, markersize=.5)
+    if t <= plot_from and t >= plot_to:
+        plt.plot(t_mat-1, val_mat, 'ko-', linewidth=.5, markersize=.5)
     idx = np.unique(ancest)
 plt.xlabel('Iteration')
 plt.ylabel('State')
-plt.xlim(1950, 1999)
+plt.xlim(plot_to, plot_from)
 plt.grid()
 plt.tight_layout()
 plt.show()

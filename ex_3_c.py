@@ -1,18 +1,18 @@
 import numpy as np
-from scipy.stats import norm
+from scipy.stats import norm, invgamma
 import matplotlib.pyplot as plt
 
 def invgamma_rvs(a, b):
-    # b = np.min((100000, b))
     y = np.random.gamma(a, 1/b)
     return 1/y
+    # return invgamma.rvs(a, scale=b)
 
 def bpf_propagate(x_prev, phi, sigma):
     return np.random.normal(loc=phi*x_prev, scale=sigma)
 
 def log_weights(y, x, beta):
-    std = beta*np.exp(x/2)
-    return -0.5*np.log(2*np.pi) - np.log(std) - np.square(y)/(2 * std**2)
+    variance = beta**2*np.exp(x)
+    return -1/2*np.log(2*np.pi * variance) - y**2/(2*variance)
 
 def bpf(y, x_in, N, phi, sigma, beta):
 
@@ -64,47 +64,51 @@ def bpf(y, x_in, N, phi, sigma, beta):
         a_vec[t] = a_mat[a_vec[t+1], t]
 
     for t in range(T):
-        path[t] = w_mat[a_vec[t], t]*x[a_vec[t], t]
+        # path[t] = w_mat[a_vec[t], t]*x[a_vec[t], t]
+        path[t] = x[a_vec[t], t]
 
     return x, path
 
 def gibbs(M, N, y, x_in, beta_0, sigma_0, phi):
+    # particle gibbs algorithm
     T = len(y)
     beta2 = np.zeros(M)
     sigma2 = np.zeros(M)
     
+    x_mat = np.zeros((M, T))
     beta2[0] = beta_0**2
     sigma2[0] = sigma_0**2
     x = x_in
     for m in range(1, M):
-        if m % 100 == 0:
+        if m % 10 == 0:
             print(m, '/', M)
         # draw sigma and beta from their inverse gamma distributions
         a = 0.01 + T/2
         b_s = 0.01 + 0.5 * np.sum((x[1:T] - phi*x[0:T-1])**2)
         sigma2_new = invgamma_rvs(a, b_s)
 
-        b_b = 0.01 + 0.5*np.sum(np.exp(-x[1:T]) * y[1:T]**2)
+        b_b = 0.01 + 0.5 * np.sum(np.exp(-x[0:T]) * y[0:T]**2)
         beta2_new = invgamma_rvs(a, b_b)
 
         _, x = bpf(y, x, N, phi, sigma2_new**.5, beta2_new**.5)
 
         sigma2[m] = sigma2_new
         beta2[m] = beta2_new
-    return sigma2, beta2
+        x_mat[m, :] = x
+    return sigma2, beta2, x_mat
 
 phi = 0.985
-sigma_0 = 0.16
-beta_0 = 0.7
+sigma_0 = 0.3
+beta_0 = 0.44
 M = 1000
-N = 100
+N = 1000
 
 # y = np.genfromtxt('Hand-in/OMXLogReturns.csv', delimiter=',')
 y = np.genfromtxt('OMXLogReturns.csv', delimiter=',')
 T = len(y)
-x_in = np.random.normal(0, 1, size=T)
+x_in = np.random.normal(1, 1, size=T)
 
-sigma2, beta2 = gibbs(M, N, y, x_in, beta_0, sigma_0, phi)
+sigma2, beta2, x_mat = gibbs(M, N, y, x_in, beta_0, sigma_0, phi)
 
 plt.figure(1)
 plt.subplot(121)
@@ -140,7 +144,49 @@ plt.subplot(212)
 plt.plot(sigma2)
 plt.ylabel(r'$\sigma^2$')
 plt.xlabel('PMH iteration')
+
+
+fig_final2 = plt.figure()
+# gs = fig_final.add_gridspec(3, 2)
+# ax1 = fig_final.add_subplot(gs[0,:])
+# ax2 = fig_final.add_subplot(gs[1,:])
+# ax3 = fig_final.add_subplot(gs[2,0])
+# ax4 = fig_final.add_subplot(gs[2,1])
+ax1 = plt.subplot2grid((3,2),(0,0), colspan=2)
+ax2 = plt.subplot2grid((3,2),(1,0), colspan=2)
+ax3 = plt.subplot2grid((3,2),(2,0))
+ax4 = plt.subplot2grid((3,2),(2,1))
+
+
+ax1.plot(beta2)
+ax1.set_ylabel(r'$\beta^2$')
+ax1.set_xlabel('PMH iteration')
+
+ax2.plot(sigma2)
+ax2.set_ylabel(r'$\sigma^2$')
+ax2.set_xlabel('PMH iteration')
+
+ax3.hist(beta2[100::], bins=50, density=1)
+ax3.set_xlabel(r'$\beta^2$')
+
+ax4.hist(sigma2[100::], bins=50, density=1)
+ax4.set_xlabel(r'$\sigma^2$')
+
+fig_final2.tight_layout()
+
+# plt.figure()
+# plt.plot(x_mat[0,:], label='0')
+# plt.plot(x_mat[250,:], label='250')
+# plt.plot(x_mat[999,:], label='999')
+# plt.plot(x_mat[2000,:], label='2000')
+# plt.plot(x_mat[5000,:], label='5000')
+# plt.plot(x_mat[9000,:], label='9000')
+
+plt.title('x_mat')
 plt.show()
+
+
+
 
 # x, path = bpf(y, x_in, N, phi, sigma, beta)
 

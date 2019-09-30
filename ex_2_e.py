@@ -62,7 +62,6 @@ for t in range(1, T):
     # compute misadjustment multipliers v
     v = fapf_v(y[t-1], x_fapf[:, t-1])
     v /= v.sum()
-
     # ancenstor indexes
     a[:, t] = np.random.choice(N, size=N, p=v)
 
@@ -89,4 +88,8 @@ plt.ylabel('State')
 plt.xlim(1950, 1999)
 plt.grid()
 plt.tight_layout()
+
+plt.figure()
+plt.plot(N_eff)
+
 plt.show()

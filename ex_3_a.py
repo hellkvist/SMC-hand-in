@@ -3,10 +3,10 @@ import matplotlib.pyplot as plt
 from scipy.stats import norm
 from numpy.random import choice
 
-y = np.genfromtxt('seOMXlogreturns2012to2014.csv')
+y = np.genfromtxt('OMXLogReturns.csv')
 T = len(y)
 
-phi_grid = np.arange(0.1, 1, 0.05)
+phi_grid = np.hstack((np.arange(0.1, 1, 0.05), np.arange(0.95, 1, 0.01)))
 N_phi = len(phi_grid)
 
 sigma = 0.16

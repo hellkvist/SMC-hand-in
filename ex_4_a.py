@@ -7,7 +7,6 @@ I2_CONST = np.identity(2)
 COV_0 = 1/60 * I2_CONST
 SIGMA_0 = 1/60**0.5
 MEAN_0 = np.zeros(2)
-Z_0 = 60/(2*PI)
 
 def identifier(x1, x2, N):
     """
@@ -33,12 +32,21 @@ def pi_pdf(x1, x2, k, K, N):
         Function for the annealing sequence pi_k. The 'pdf' is unnormalized
         returns the unnormalized pdf evaluated at the point (x1, x2) for annealing coefficient k
     """
-    return (identifier(x1, x2, N)*np.cos(PI*x1)**2*np.sin(3*PI*x2)**6)**(k/K)*norm.pdf(x1, 0, SIGMA_0)*norm.pdf(x2, 0, SIGMA_0)
+
+    # return (identifier(x1, x2, N)*np.cos(PI*x1)**2*np.sin(3*PI*x2)**6*norm.pdf(x1, 0, SIGMA_0)*norm.pdf(x2, 0, SIGMA_0))**(k/K)*(norm.pdf(x1, 0, 1)*norm.pdf(x2, 0, 1))**(1-k/K)
+    
+    # this is good
+    # return (identifier(x1, x2, N)*np.cos(PI*x1)**2*np.sin(3*PI*x2)**6)**(k/K)*norm.pdf(x1, 0, SIGMA_0)*norm.pdf(x2, 0, SIGMA_0)
+
+    return identifier(x1, x2, N)*(np.cos(PI*x1)**2*np.sin(3*PI*x2)**6*norm.pdf(x1, 0, SIGMA_0)*norm.pdf(x2, 0, SIGMA_0))**(k/K)
+
+    # this is not so good
     # return (identifier(x1, x2, N)*np.cos(PI*x1)**2*np.sin(3*PI*x2)**6*norm.pdf(x1, 0, SIGMA_0)*norm.pdf(x2, 0, SIGMA_0))**(k/K)
 
 
 def sample_x0(N):
-    return np.random.normal(loc=0, scale=SIGMA_0, size=N)
+    # return np.random.normal(loc=0, scale=SIGMA_0, size=N)
+    return np.random.uniform(size=N)
 
 
 def metropolis_hastings(x1, x2, N, step_size_GRW, k, K):
@@ -77,13 +85,17 @@ def smc_sampler(K, N, step_size_GRW):
     x2[:, 0] = sample_x0(N)
     w[:, 0] = 1/N*np.ones(N)
     w_tilde_mat[:, 0] = np.ones(N)
+
     # compute initial ESS
     N_eff[0] = 1/((w[:, 0]**2).sum())
 
 
     x1_prev = x1[:, 0]
     x2_prev = x2[:, 0]
+
     for k in range(1, K):
+        if k % 10 == 0:
+            print(k, '/', K)
         w_prev = w[:, k-1]
         # compute pi_k(x_{k-1})
         pi_k = pi_pdf(x1_prev, x2_prev, k, K, N)
@@ -104,6 +116,8 @@ def smc_sampler(K, N, step_size_GRW):
             # resample
             idx = np.random.choice(N, size=N, replace=True, p=w_normed)
             resamples += 1
+            resample_idx = k
+            w[:, k] = 1/N*np.ones(N)
         else:
             # no resample
             idx = np.arange(N)
@@ -112,18 +126,19 @@ def smc_sampler(K, N, step_size_GRW):
         x1[:, k] = x1_prev
         x2[:, k] = x2_prev
 
-    return x1, x2, w, resamples, N_eff, w_tilde_mat
+    return x1, x2, w, resamples, N_eff, w_tilde_mat, resample_idx
 
-K = 500
+K = 80
 N = 100
 step_size_GRW = 0.02
 
-x1, x2, w, resamples, N_eff, w_tilde_mat = smc_sampler(K, N, step_size_GRW)
+x1, x2, w, resamples, N_eff, w_tilde_mat, resample_idx = smc_sampler(K, N, step_size_GRW)
 
-Z_0
+Z_0 = 1
 Z_K_hat = Z_0 * np.prod(np.sum(w_tilde_mat, axis=0))
 
 print('resampling rate:', resamples/K)
+print('avg steps between resamples', resample_idx/resamples)
 print('Z estimate:', Z_K_hat)
 
 
@@ -137,30 +152,41 @@ plt.xlabel(r'$x_2$')
 
 plt.figure(2)
 plt.plot(N_eff)
+plt.ylabel(r'$N_{eff}$')
+plt.xlabel('Iterations')
+plt.hlines(70, 0, K-1)
 
 plt.figure(3)
 plt.subplot(221)
-plt.plot(x1[:, 0], x2[:, 0], '.', label='k=0')
-plt.ylim(-.5, .5)
-plt.xlim(-.5, .5)
+plt.plot(x1[:, 0], x2[:, 0], '.', label='k=1')
+plt.xlim(0, 1)
+plt.ylim(0, 1)
+plt.xlabel(r'$x_1$')
+plt.ylabel(r'$x_2$')
 plt.grid()
 plt.legend()
 plt.subplot(222)
-plt.plot(x1[:, 30], x2[:, 50], '.', label='k=50')
-plt.ylim(-.5, .5)
-plt.xlim(-.5, .5)
+plt.plot(x1[:, 9], x2[:, 9], '.', label='k=10')
+plt.ylim(0, 1)
+plt.xlim(0, 1)
+plt.xlabel(r'$x_1$')
+plt.ylabel(r'$x_2$')
 plt.grid()
 plt.legend()
 plt.subplot(223)
-plt.plot(x1[:, 70], x2[:, 200], '.', label='k=200')
-plt.ylim(-.5, .5)
-plt.xlim(-.5, .5)
+plt.plot(x1[:, 29], x2[:, 29], '.', label='k=30')
+plt.ylim(0, 1)
+plt.xlim(0, 1)
+plt.xlabel(r'$x_1$')
+plt.ylabel(r'$x_2$')
 plt.grid()
 plt.legend()
 plt.subplot(224)
-plt.plot(x1[:, K-1], x2[:, K-1], '.', label='k='+str(K-1))
-plt.ylim(-.5, .5)
-plt.xlim(-.5, .5)
+plt.plot(x1[:, 79], x2[:, 79], '.', label='k=80')
+plt.xlim(0, 1)
+plt.ylim(0, 1)
+plt.xlabel(r'$x_1$')
+plt.ylabel(r'$x_2$')
 plt.grid()
 plt.legend()
 plt.show()

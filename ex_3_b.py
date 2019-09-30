@@ -2,6 +2,7 @@ import numpy as np
 from scipy.stats import norm
 from scipy.special import gamma
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 
 def log_invgamma(x, a, b):
     return np.log(b**a/gamma(a) * x**(-a-1)) - b/x
@@ -58,8 +59,8 @@ def pmh(y, M, N, phi, step_size_beta, step_size_sigma):
     log_z = np.zeros(M)
     accepts = 0
     # initialize parameters beta and sigma
-    beta[0] = 10
-    sigma[0] = 10
+    beta[0] = .5
+    sigma[0] = .5
 
     beta_prev = beta[0]
     sigma_prev = sigma[0]
@@ -113,9 +114,9 @@ def pmh(y, M, N, phi, step_size_beta, step_size_sigma):
 # y = np.genfromtxt('Hand-in/OMXLogReturns.csv', delimiter=',')
 y = np.genfromtxt('OMXLogReturns.csv', delimiter=',')
 phi = 0.985
-step_size_beta = 1
-step_size_sigma = 0.5
-M = 3000
+step_size_beta = 0.01
+step_size_sigma = 0.01
+M = 10000
 N = 1000
 
 beta, sigma, log_z = pmh(y, M, N, phi, step_size_beta, step_size_sigma)
@@ -173,4 +174,63 @@ plt.xlabel('PMH iteration')
 plt.figure(7)
 plt.plot(log_z, label='log_z')
 plt.legend()
+
+
+fig_final = plt.figure()
+# gs = fig_final.add_gridspec(3, 2)
+# ax1 = fig_final.add_subplot(gs[0,:])
+# ax2 = fig_final.add_subplot(gs[1,:])
+# ax3 = fig_final.add_subplot(gs[2,0])
+# ax4 = fig_final.add_subplot(gs[2,1])
+ax1 = plt.subplot2grid((3,2),(0,0), colspan=2)
+ax2 = plt.subplot2grid((3,2),(1,0), colspan=2)
+ax3 = plt.subplot2grid((3,2),(2,0))
+ax4 = plt.subplot2grid((3,2),(2,1))
+
+
+ax1.plot(beta**2)
+ax1.set_ylabel(r'$\beta^2$')
+ax1.set_xlabel('PMH iteration')
+
+ax2.plot(sigma**2)
+ax2.set_ylabel(r'$\sigma^2$')
+ax2.set_xlabel('PMH iteration')
+
+ax3.hist(beta[2000::]**2, bins=50, density=1)
+ax3.set_xlabel(r'$\beta^2$')
+
+ax4.hist(sigma[2000::]**2, bins=50, density=1)
+ax4.set_xlabel(r'$\sigma^2$')
+
+fig_final.tight_layout()
+
+fig_final2 = plt.figure()
+# gs = fig_final.add_gridspec(3, 2)
+# ax1 = fig_final.add_subplot(gs[0,:])
+# ax2 = fig_final.add_subplot(gs[1,:])
+# ax3 = fig_final.add_subplot(gs[2,0])
+# ax4 = fig_final.add_subplot(gs[2,1])
+ax1 = plt.subplot2grid((3,2),(0,0), colspan=2)
+ax2 = plt.subplot2grid((3,2),(1,0), colspan=2)
+ax3 = plt.subplot2grid((3,2),(2,0))
+ax4 = plt.subplot2grid((3,2),(2,1))
+
+
+ax1.plot(beta**2)
+ax1.set_ylabel(r'$\beta^2$')
+ax1.set_xlabel('PMH iteration')
+
+ax2.plot(sigma**2)
+ax2.set_ylabel(r'$\sigma^2$')
+ax2.set_xlabel('PMH iteration')
+
+ax3.hist(beta[5000::]**2, bins=50, density=1)
+ax3.set_xlabel(r'$\beta^2$')
+
+ax4.hist(sigma[5000::]**2, bins=50, density=1)
+ax4.set_xlabel(r'$\sigma^2$')
+
+fig_final.tight_layout()
+
+
 plt.show()

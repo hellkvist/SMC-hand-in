@@ -8,7 +8,6 @@ y = np.zeros(T)
 
 x[0] = np.random.normal(0, 2**.5)
 y[0] = np.random.normal(2*x[0], 0.1**.5)
-
 for t in range(1, T):
     x[t] = np.random.normal(0.8*x[t-1], 0.5**.5)
     y[t] = np.random.normal(2*x[t], 0.1**.5)
@@ -47,6 +46,9 @@ def fapf_q_pdf(x, y, x_):
 def fapf_v_pdf(y, x_):
     return norm.pdf(y, loc=1.6*x_, scale=2.1**0.5)
 
+def fapf_y_from_x(y, x):
+    return norm.pdf(y, loc=2*x, scale=0.1**0.5)
+
 def systematic_resampling(U, v):
     N = len(v)
     v_cumsum = np.cumsum(v)
@@ -76,12 +78,16 @@ x_fapf[:, 0] = fapf_q(y[0], 0, N)
 w = 1/N * np.ones(N)
 
 N_eff = np.zeros(T)
+v = fapf_v_pdf(y[0], np.zeros(N))
+v /= v.sum()
+w = 1/N * np.ones(N)
+N_eff[0] = 1/np.sum(w**2)
 for t in range(1, T):
     # compute misadjustment multipliers v
     v = fapf_v_pdf(y[t], x_fapf[:, t-1])
     v /= v.sum()
-    N_eff[t] = 1/np.sum(v**2)
-    if N_eff[t] < 80: # resample
+    N_eff[t] = 1/np.sum(w**2)
+    if N_eff[t] < 50: # resample
          # ancenstor indexes
         U = np.zeros(N)
         U0 = np.random.uniform(0, 1/N)
@@ -90,13 +96,17 @@ for t in range(1, T):
         # a[:, t] = np.random.choice(N, size=N, p=v)
         a[:, t] = systematic_resampling(U, v)
         resamples += 1
+        w = 1/N*np.ones(N)
     else: # do not resample
         a[:, t] = np.arange(N)
 
     # propagation
     x_fapf[:, t] = fapf_q(y[t], x_fapf[a[:, t].astype(int), t-1], N) 
     x_fapf_hat[t] = np.mean(x_fapf[:, t])
-    
+    w_tilde = fapf_v_pdf(y[t], x_fapf[:, t-1])*w
+    # w_tilde = fapf_y_from_x(y[t], x_fapf[:, t])*w
+    w = w_tilde/w_tilde.sum()
+
 mad_fapf_2_kalman.append(np.mean(np.abs(x_fapf_hat-x_kalman)))
 
 print('MAD between FAPF and Kalman state: ', mad_fapf_2_kalman)
@@ -105,22 +115,30 @@ print('N.o. resamples: ', resamples)
 
 a = a.astype(int)
 idx = np.arange(N)
-for t in range(T-2, T-50, -1):
+plot_from = 100
+plot_to = 0
+plt.subplot(211)
+for t in range(T-1, 0, -1):
     n = len(idx)
     t_mat = np.vstack((t*np.ones(n), (t-1)*np.ones(n)))
     ancest = a[a[idx, t], t-1]
     val_mat =  np.vstack((x_fapf[idx, t], x_fapf[ancest, t-1]))
     idx_mat = np.vstack((idx, ancest))
-    plt.plot(t_mat, val_mat, 'ko-', linewidth=.5, markersize=.5)
+    if t <= plot_from and t >= plot_to:
+        plt.plot(t_mat, val_mat, 'ko-', linewidth=.5, markersize=.5)
     idx = np.unique(ancest)
 plt.xlabel('Iteration')
 plt.ylabel('State')
-plt.xlim(1950, 1999)
+plt.xlim(plot_to, plot_from)
 plt.grid()
 plt.tight_layout()
 
-plt.figure(2)
+plt.subplot(212)
 plt.grid()
 plt.plot(N_eff)
+plt.xlim(plot_to, plot_from)
+plt.tight_layout()
+plt.hlines(50, plot_to, plot_from)
+
 print(np.mean(N_eff))
 plt.show()
